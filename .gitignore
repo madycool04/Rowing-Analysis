@@ -1,0 +1,28 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Node / frontend
+node_modules/
+dist/
+frontend/dist/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Docker
+*.pid
+
+# Sample/generated data artifacts (not source)
+backend/sample_data/*.generated.csv

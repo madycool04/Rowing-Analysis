@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     Nothing here should hardcode secrets.
     """
 
-    PROJECT_NAME: str = "Rowing Performance Analytics"
+    PROJECT_NAME: str = "OarSight"
     API_V1_PREFIX: str = "/api/v1"
 
     DATABASE_URL: str = "postgresql+psycopg://rowing:change_me@localhost:5432/rowing_analytics"

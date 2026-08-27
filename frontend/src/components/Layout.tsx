@@ -19,7 +19,7 @@ export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="layout">
       <aside className="layout-sidebar">
-        <div className="brand">Rowing Performance Analytics</div>
+        <div className="brand">OarSight</div>
         <nav className="layout-nav">
           {NAV_ITEMS.map((item) => (
             <NavLink

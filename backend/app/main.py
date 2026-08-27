@@ -23,7 +23,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,16 +41,28 @@ app.add_middleware(
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": "The request body didn't match the expected format.", "errors": exc.errors()},
+        content={
+            "detail": "The request body didn't match the expected format.",
+            "errors": exc.errors(),
+        },
     )
 
 
 @app.exception_handler(SQLAlchemyError)
-async def database_exception_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
-    logger.error("Unhandled database error on %s %s", request.method, request.url.path, exc_info=True)
+async def database_exception_handler(
+    request: Request, exc: SQLAlchemyError
+) -> JSONResponse:
+    logger.error(
+        "Unhandled database error on %s %s",
+        request.method,
+        request.url.path,
+        exc_info=True,
+    )
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         content={"detail": "A database error occurred. Please try again."},
@@ -58,14 +70,24 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError) -> 
 
 
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+async def unhandled_exception_handler(
+    request: Request, exc: Exception
+) -> JSONResponse:
     if isinstance(exc, HTTPException):
         # Should already be handled by Starlette's default handler, but
         # if it ever reaches here, preserve its intended status/detail
         # rather than masking it as a generic 500.
-        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
 
-    logger.error("Unhandled exception on %s %s", request.method, request.url.path, exc_info=True)
+    logger.error(
+        "Unhandled exception on %s %s",
+        request.method,
+        request.url.path,
+        exc_info=True,
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={"detail": "Something went wrong on our end. Please try again."},
@@ -105,4 +127,7 @@ def on_startup() -> None:
     try:
         create_all_tables()
     except Exception:  # noqa: BLE001
-        logger.warning("Could not create tables on startup; continuing.", exc_info=True)
+        logger.warning(
+            "Could not create tables on startup; continuing.",
+            exc_info=True,
+        )

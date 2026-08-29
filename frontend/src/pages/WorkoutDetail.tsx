@@ -229,7 +229,6 @@ export function WorkoutDetail() {
                 <th>Split</th>
                 <th>Distance</th>
                 <th>Time</th>
-                <th>Pace</th>
                 <th>Watts</th>
                 <th>HR</th>
                 <th>Stroke Rate</th>
@@ -241,7 +240,6 @@ export function WorkoutDetail() {
                   <td>{i + 1}</td>
                   <td>{formatDistance(s.distance_m)}</td>
                   <td>{formatDuration(s.elapsed_time_s)}</td>
-                  <td>{s.pace_s_per_500 != null ? `${(s.pace_s_per_500 / 60).toFixed(0)}:${(s.pace_s_per_500 % 60).toFixed(1).padStart(4, "0")}` : "—"}</td>
                   <td>{s.watts != null ? `${s.watts.toFixed(0)}W` : "—"}</td>
                   <td>{s.heart_rate ?? "—"}</td>
                   <td>{s.stroke_rate != null ? s.stroke_rate.toFixed(0) : "—"}</td>

@@ -15,44 +15,6 @@ import {
   formatDuration,
 } from "../utils/format";
 
-function getPacingInterpretation(
-  cv: number | null | undefined,
-  fade: number | null | undefined
-) {
-  if (cv == null) {
-    return {
-      title: "Pacing unavailable",
-      text:
-        "There isn't enough split data to judge how consistent your pace was.",
-      icon: "—",
-    };
-  }
-
-  if (cv <= 5 && (fade == null || fade <= 3)) {
-    return {
-      title: "Very consistent pacing",
-      text: "You kept a steady pace throughout the workout.",
-      icon: "✓",
-    };
-  }
-
-  if (cv <= 10 && (fade == null || fade <= 6)) {
-    return {
-      title: "Mostly consistent pacing",
-      text:
-        "Your pace was reasonably steady, with some variation during the workout.",
-      icon: "→",
-    };
-  }
-
-  return {
-    title: "Pace varied",
-    text:
-      "Your pace changed noticeably during the workout. This can happen when effort or fatigue changes.",
-    icon: "↕",
-  };
-}
-
 export function WorkoutDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -191,11 +153,6 @@ export function WorkoutDetail() {
   const dq = analytics.data_quality as Record<string, any>;
 
   const pacing = m.pacing ?? {};
-
-  const pacingInterpretation = getPacingInterpretation(
-    pacing.pacing_cv_pct,
-    pacing.pace_fade_pct
-  );
 
   const intervals = m.intervals;
   const hrZones = m.hr_zones;
@@ -371,25 +328,9 @@ export function WorkoutDetail() {
         >
           {dq.pacing_evenness_available && (
             <>
-              <div className="pacing-interpretation">
-                <div className="pacing-interpretation-title">
-                  <span className="pacing-interpretation-icon">
-                    {pacingInterpretation.icon}
-                  </span>
-
-                  <strong>
-                    {pacingInterpretation.title}
-                  </strong>
-                </div>
-
-                <p className="metric-note pacing-summary">
-                  {pacingInterpretation.text}
-                </p>
-              </div>
-
               <div className="pacing-metrics">
                 <MetricRow
-                  label="Pace variation"
+                  label="Pace variation (CV)"
                   value={
                     pacing.pacing_cv_pct != null
                       ? `${pacing.pacing_cv_pct.toFixed(1)}%`
@@ -419,12 +360,18 @@ export function WorkoutDetail() {
                 Lower variation means your pace stayed more even.
                 Pace fade shows how much your pace slowed toward
                 the end of the workout.
+              </p>
+
+              <p className="metric-note">
+                <strong>Research context</strong>
                 <br />
-                <br />
-                <em>
-                  Consistency labels are general guidelines, not
-                  official rowing standards.
-                </em>
+                An analysis of 636 crews from World and European
+                Championship A-finals found that medal-winning crews
+                averaged a split-time variation (CV) of 1.72%, compared
+                with 2.00% for non-podium crews. This suggests that
+                lower pacing variation is associated with higher-level
+                race performance, although there is no single "elite"
+                CV target for every workout.
               </p>
             </>
           )}

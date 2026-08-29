@@ -64,6 +64,361 @@ export function Upload() {
 }
 
 /* ============================================================
+   CSV FORMAT GUIDE
+   ============================================================ */
+
+function downloadCsvTemplate(
+  filename: string,
+  content: string
+) {
+  const blob = new Blob([content], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+const SUMMARY_CSV_TEMPLATE = `Date,Description,Time,Distance,Avg Heart Rate
+2026-08-29,2K Test,7:05.2,2000,172
+`;
+
+const CONTINUOUS_CSV_TEMPLATE = `Date,Description,Time,Distance,Pace,Watts,SPM,HR
+2026-08-29,5K Row,1:47.0,500,1:47.0,205,28,158
+2026-08-29,5K Row,1:46.2,500,1:46.2,210,29,164
+2026-08-29,5K Row,1:44.8,500,1:44.8,220,30,170
+2026-08-29,5K Row,1:42.5,500,1:42.5,230,32,178
+`;
+
+const INTERVAL_CSV_TEMPLATE = `Date,Description,Time,Distance,Pace,Watts,SPM,HR,Rest Time,Rest Distance
+2026-08-29,4 x 1000m,3:35.0,1000,1:47.5,195,28,175,180,0
+2026-08-29,4 x 1000m,3:33.0,1000,1:46.5,200,29,180,180,0
+2026-08-29,4 x 1000m,3:31.0,1000,1:45.5,205,30,183,180,0
+2026-08-29,4 x 1000m,3:30.0,1000,1:45.0,210,31,185,0,0
+`;
+
+function CsvFormatGuide() {
+  return (
+    <div
+      style={{
+        marginTop: "1rem",
+        borderTop: "1px solid var(--color-border)",
+        paddingTop: "1rem",
+      }}
+    >
+      <details>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontWeight: 600,
+            color: "var(--color-text-primary)",
+            padding: "0.25rem 0",
+          }}
+        >
+          What format should my CSV have?
+        </summary>
+
+        <div
+          style={{
+            marginTop: "1rem",
+            color: "var(--color-text-secondary)",
+            lineHeight: 1.6,
+          }}
+        >
+          <p>
+            You can upload a Concept2 CSV containing a{" "}
+            <strong>summary workout</strong>,{" "}
+            <strong>continuous workout</strong>, or{" "}
+            <strong>interval workout</strong>.
+          </p>
+
+          <p>
+            <strong>Important:</strong> You do not need to add a
+            "Workout Type" column. The app detects continuous and
+            interval workouts automatically from the rest columns.
+          </p>
+
+          {/* SUMMARY WORKOUT */}
+          <div style={{ marginTop: "1.5rem" }}>
+            <h3
+              style={{
+                color: "var(--color-text-primary)",
+                fontSize: "1rem",
+                marginBottom: "0.5rem",
+              }}
+            >
+              1. Summary workout
+            </h3>
+
+            <p>
+              Use this when your CSV contains{" "}
+              <strong>one row for the entire workout</strong>.
+            </p>
+
+            <p>
+              This is useful for workouts such as a 2K test where
+              you only have the total workout information.
+            </p>
+
+            <p>
+              Required columns:
+              <br />
+              <code>Date, Description, Time, Distance</code>
+            </p>
+
+            <p>
+              Optional columns:
+              <br />
+              <code>Avg Heart Rate, Avg Watts, Avg SPM</code>
+            </p>
+
+            <pre
+              style={{
+                overflowX: "auto",
+                background: "var(--color-surface-raised)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "8px",
+                padding: "0.75rem",
+                fontSize: "0.78rem",
+              }}
+            >
+{`Date,Description,Time,Distance,Avg Heart Rate
+2026-08-29,2K Test,7:05.2,2000,172`}
+            </pre>
+
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() =>
+                downloadCsvTemplate(
+                  "summary-workout-template.csv",
+                  SUMMARY_CSV_TEMPLATE
+                )
+              }
+            >
+              Download summary template
+            </button>
+          </div>
+
+          {/* CONTINUOUS WORKOUT */}
+          <div style={{ marginTop: "1.5rem" }}>
+            <h3
+              style={{
+                color: "var(--color-text-primary)",
+                fontSize: "1rem",
+                marginBottom: "0.5rem",
+              }}
+            >
+              2. Continuous workout
+            </h3>
+
+            <p>
+              Use this when the workout is{" "}
+              <strong>one continuous piece</strong> broken into
+              multiple splits.
+            </p>
+
+            <p>
+              Example: a 5K row where every 500m is recorded as a
+              separate row.
+            </p>
+
+            <p>
+              Recommended columns:
+              <br />
+              <code>
+                Date, Description, Time, Distance, Pace, Watts,
+                SPM, HR
+              </code>
+            </p>
+
+            <p>
+              <strong>
+                Do not include non-zero Rest Time or Rest Distance
+              </strong>{" "}
+              for a continuous workout.
+            </p>
+
+            <pre
+              style={{
+                overflowX: "auto",
+                background: "var(--color-surface-raised)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "8px",
+                padding: "0.75rem",
+                fontSize: "0.78rem",
+              }}
+            >
+{`Date,Description,Time,Distance,Pace,Watts,SPM,HR
+2026-08-29,5K Row,1:47.0,500,1:47.0,205,28,158
+2026-08-29,5K Row,1:46.2,500,1:46.2,210,29,164
+2026-08-29,5K Row,1:44.8,500,1:44.8,220,30,170
+2026-08-29,5K Row,1:42.5,500,1:42.5,230,32,178`}
+            </pre>
+
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() =>
+                downloadCsvTemplate(
+                  "continuous-workout-template.csv",
+                  CONTINUOUS_CSV_TEMPLATE
+                )
+              }
+            >
+              Download continuous template
+            </button>
+          </div>
+
+          {/* INTERVAL WORKOUT */}
+          <div style={{ marginTop: "1.5rem" }}>
+            <h3
+              style={{
+                color: "var(--color-text-primary)",
+                fontSize: "1rem",
+                marginBottom: "0.5rem",
+              }}
+            >
+              3. Interval workout
+            </h3>
+
+            <p>
+              Use this for workouts such as{" "}
+              <strong>4 × 1000m</strong>,{" "}
+              <strong>6 × 500m</strong>, or other interval sessions.
+            </p>
+
+            <p>
+              Each work interval gets its own row. The recovery
+              after the interval can be recorded using{" "}
+              <code>Rest Time</code> and/or{" "}
+              <code>Rest Distance</code>.
+            </p>
+
+            <p>
+              Recommended columns:
+              <br />
+              <code>
+                Date, Description, Time, Distance, Pace, Watts,
+                SPM, HR, Rest Time, Rest Distance
+              </code>
+            </p>
+
+            <p>
+              <strong>Rest Time is in seconds.</strong> For example,
+              <code>180</code> means 3 minutes of recovery.
+            </p>
+
+            <pre
+              style={{
+                overflowX: "auto",
+                background: "var(--color-surface-raised)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "8px",
+                padding: "0.75rem",
+                fontSize: "0.78rem",
+              }}
+            >
+{`Date,Description,Time,Distance,Pace,Watts,SPM,HR,Rest Time,Rest Distance
+2026-08-29,4 x 1000m,3:35.0,1000,1:47.5,195,28,175,180,0
+2026-08-29,4 x 1000m,3:33.0,1000,1:46.5,200,29,180,180,0
+2026-08-29,4 x 1000m,3:31.0,1000,1:45.5,205,30,183,180,0
+2026-08-29,4 x 1000m,3:30.0,1000,1:45.0,210,31,185,0,0`}
+            </pre>
+
+            <p>
+              The last interval normally has{" "}
+              <code>0</code> rest because there is no recovery after
+              the final repetition.
+            </p>
+
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() =>
+                downloadCsvTemplate(
+                  "interval-workout-template.csv",
+                  INTERVAL_CSV_TEMPLATE
+                )
+              }
+            >
+              Download interval template
+            </button>
+          </div>
+
+          {/* COLUMN NOTES */}
+          <div style={{ marginTop: "1.5rem" }}>
+            <h3
+              style={{
+                color: "var(--color-text-primary)",
+                fontSize: "1rem",
+                marginBottom: "0.5rem",
+              }}
+            >
+              Column notes
+            </h3>
+
+            <ul style={{ paddingLeft: "1.25rem" }}>
+              <li>
+                <strong>Date</strong> is the workout date.
+              </li>
+
+              <li>
+                <strong>Description</strong> is the workout name.
+              </li>
+
+              <li>
+                <strong>Time</strong> can be seconds or a time such
+                as <code>3:35.0</code>.
+              </li>
+
+              <li>
+                <strong>Distance</strong> is measured in metres.
+              </li>
+
+              <li>
+                <strong>Pace</strong> is the time per 500m, such as{" "}
+                <code>1:47.5</code>.
+              </li>
+
+              <li>
+                <strong>Watts</strong> is the average power for the
+                row/split.
+              </li>
+
+              <li>
+                <strong>SPM</strong> means strokes per minute.
+              </li>
+
+              <li>
+                <strong>HR</strong> means heart rate in BPM.
+              </li>
+
+              <li>
+                <strong>Rest Time</strong> is in seconds.
+              </li>
+
+              <li>
+                <strong>Rest Distance</strong> is in metres.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+/* ============================================================
    CSV UPLOAD
    ============================================================ */
 
@@ -154,7 +509,7 @@ function CsvUploadPanel({
           </p>
 
           <p className="dropzone-hint">
-            Summary or detailed split exports both work.
+            Summary, continuous, and interval CSVs are supported.
           </p>
 
           <input
@@ -172,6 +527,8 @@ function CsvUploadPanel({
           />
         </div>
       )}
+
+      {status !== "done" && <CsvFormatGuide />}
 
       {status === "error" && (
         <div

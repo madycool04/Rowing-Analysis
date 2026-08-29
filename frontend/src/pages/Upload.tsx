@@ -88,22 +88,42 @@ function downloadCsvTemplate(
   URL.revokeObjectURL(url);
 }
 
+/*
+ * This is the actual canonical SUMMARY format supported by the
+ * backend parser.
+ *
+ * One row = one complete workout.
+ */
 const SUMMARY_CSV_TEMPLATE = `Date,Description,Time,Distance,Avg Heart Rate
-2026-08-29,2K Test,7:05.2,2000,172
+2026-06-01,2K Test,7:05.2,2000,172
 `;
 
-const CONTINUOUS_CSV_TEMPLATE = `Date,Description,Time,Distance,Pace,Watts,SPM,HR
-2026-08-29,5K Row,1:47.0,500,1:47.0,205,28,158
-2026-08-29,5K Row,1:46.2,500,1:46.2,210,29,164
-2026-08-29,5K Row,1:44.8,500,1:44.8,220,30,170
-2026-08-29,5K Row,1:42.5,500,1:42.5,230,32,178
+/*
+ * This is the actual canonical DETAILED format used by the
+ * rowing dataset.
+ *
+ * Continuous workout:
+ * Rest_Time = 0
+ * Rest_Distance = 0
+ */
+const CONTINUOUS_CSV_TEMPLATE = `Date,Description,Time,Distance,Pace,Watts,SPM,HR,Calories,Rest_Time,Rest_Distance
+2026-06-01,Steady State 6K,1:57.3,500,1:57.3,217,21,140,23,0,0
+2026-06-01,Steady State 6K,1:57.6,500,1:57.6,215,21,141,24,0,0
+2026-06-01,Steady State 6K,1:58.0,500,1:58.0,213,21,143,24,0,0
+2026-06-01,Steady State 6K,1:58.4,500,1:58.4,211,22,144,24,0,0
 `;
 
-const INTERVAL_CSV_TEMPLATE = `Date,Description,Time,Distance,Pace,Watts,SPM,HR,Rest Time,Rest Distance
-2026-08-29,4 x 1000m,3:35.0,1000,1:47.5,195,28,175,180,0
-2026-08-29,4 x 1000m,3:33.0,1000,1:46.5,200,29,180,180,0
-2026-08-29,4 x 1000m,3:31.0,1000,1:45.5,205,30,183,180,0
-2026-08-29,4 x 1000m,3:30.0,1000,1:45.0,210,31,185,0,0
+/*
+ * This is the same DETAILED format, but with recovery values.
+ *
+ * Any non-zero Rest_Time OR Rest_Distance causes the backend
+ * to classify the workout as an INTERVAL workout.
+ */
+const INTERVAL_CSV_TEMPLATE = `Date,Description,Time,Distance,Pace,Watts,SPM,HR,Calories,Rest_Time,Rest_Distance
+2026-06-01,4 x 1000m,3:35.0,1000,1:47.5,195,28,175,100,180,0
+2026-06-01,4 x 1000m,3:33.0,1000,1:46.5,200,29,180,102,180,0
+2026-06-01,4 x 1000m,3:31.0,1000,1:45.5,205,30,183,104,180,0
+2026-06-01,4 x 1000m,3:30.0,1000,1:45.0,210,31,185,106,0,0
 `;
 
 function CsvFormatGuide() {
@@ -135,19 +155,36 @@ function CsvFormatGuide() {
           }}
         >
           <p>
-            You can upload a Concept2 CSV containing a{" "}
-            <strong>summary workout</strong>,{" "}
-            <strong>continuous workout</strong>, or{" "}
-            <strong>interval workout</strong>.
+            The app supports Concept2 workout CSV files in two
+            formats:
           </p>
+
+          <ul style={{ paddingLeft: "1.25rem" }}>
+            <li>
+              <strong>Summary CSV</strong> — one row for the
+              complete workout.
+            </li>
+
+            <li>
+              <strong>Detailed CSV</strong> — one row for each
+              split or interval.
+            </li>
+          </ul>
 
           <p>
-            <strong>Important:</strong> You do not need to add a
-            "Workout Type" column. The app detects continuous and
-            interval workouts automatically from the rest columns.
+            <strong>
+              You do not need to add a "Workout Type" column.
+            </strong>{" "}
+            The app automatically determines whether a detailed
+            workout is continuous or interval based on the
+            <code> Rest_Time</code> and{" "}
+            <code>Rest_Distance</code> columns.
           </p>
 
-          {/* SUMMARY WORKOUT */}
+          {/* ==================================================
+              SUMMARY
+             ================================================== */}
+
           <div style={{ marginTop: "1.5rem" }}>
             <h3
               style={{
@@ -160,25 +197,34 @@ function CsvFormatGuide() {
             </h3>
 
             <p>
-              Use this when your CSV contains{" "}
-              <strong>one row for the entire workout</strong>.
+              Use a summary CSV when you have{" "}
+              <strong>one row containing the entire workout</strong>.
             </p>
 
             <p>
-              This is useful for workouts such as a 2K test where
-              you only have the total workout information.
+              Example: a 2K test where you only want to import the
+              total distance and total time.
             </p>
 
             <p>
-              Required columns:
-              <br />
-              <code>Date, Description, Time, Distance</code>
+              <strong>Required columns:</strong>
             </p>
 
+            <pre
+              style={{
+                overflowX: "auto",
+                background: "var(--color-surface-raised)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "8px",
+                padding: "0.75rem",
+                fontSize: "0.78rem",
+              }}
+            >
+{`Date,Description,Time,Distance,Avg Heart Rate`}
+            </pre>
+
             <p>
-              Optional columns:
-              <br />
-              <code>Avg Heart Rate, Avg Watts, Avg SPM</code>
+              <strong>Example:</strong>
             </p>
 
             <pre
@@ -192,8 +238,13 @@ function CsvFormatGuide() {
               }}
             >
 {`Date,Description,Time,Distance,Avg Heart Rate
-2026-08-29,2K Test,7:05.2,2000,172`}
+2026-06-01,2K Test,7:05.2,2000,172`}
             </pre>
+
+            <p className="muted small">
+              Summary workouts do not contain split-level data,
+              so the Splits table will not be available for them.
+            </p>
 
             <button
               type="button"
@@ -209,7 +260,10 @@ function CsvFormatGuide() {
             </button>
           </div>
 
-          {/* CONTINUOUS WORKOUT */}
+          {/* ==================================================
+              DETAILED / CONTINUOUS
+             ================================================== */}
+
           <div style={{ marginTop: "1.5rem" }}>
             <h3
               style={{
@@ -222,30 +276,17 @@ function CsvFormatGuide() {
             </h3>
 
             <p>
-              Use this when the workout is{" "}
-              <strong>one continuous piece</strong> broken into
-              multiple splits.
+              Use the detailed format when your workout is broken
+              into multiple splits.
             </p>
 
             <p>
-              Example: a 5K row where every 500m is recorded as a
-              separate row.
+              Example: a <strong>6K steady-state row</strong> with
+              one row for every 500m.
             </p>
 
             <p>
-              Recommended columns:
-              <br />
-              <code>
-                Date, Description, Time, Distance, Pace, Watts,
-                SPM, HR
-              </code>
-            </p>
-
-            <p>
-              <strong>
-                Do not include non-zero Rest Time or Rest Distance
-              </strong>{" "}
-              for a continuous workout.
+              Use these columns:
             </p>
 
             <pre
@@ -258,11 +299,48 @@ function CsvFormatGuide() {
                 fontSize: "0.78rem",
               }}
             >
-{`Date,Description,Time,Distance,Pace,Watts,SPM,HR
-2026-08-29,5K Row,1:47.0,500,1:47.0,205,28,158
-2026-08-29,5K Row,1:46.2,500,1:46.2,210,29,164
-2026-08-29,5K Row,1:44.8,500,1:44.8,220,30,170
-2026-08-29,5K Row,1:42.5,500,1:42.5,230,32,178`}
+{`Date,Description,Time,Distance,Pace,Watts,SPM,HR,Calories,Rest_Time,Rest_Distance`}
+            </pre>
+
+            <p>
+              For a continuous workout:
+            </p>
+
+            <ul style={{ paddingLeft: "1.25rem" }}>
+              <li>
+                <code>Rest_Time</code> should be{" "}
+                <strong>0</strong>.
+              </li>
+
+              <li>
+                <code>Rest_Distance</code> should be{" "}
+                <strong>0</strong>.
+              </li>
+
+              <li>
+                Each row represents one split.
+              </li>
+            </ul>
+
+            <p>
+              <strong>Example:</strong>
+            </p>
+
+            <pre
+              style={{
+                overflowX: "auto",
+                background: "var(--color-surface-raised)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "8px",
+                padding: "0.75rem",
+                fontSize: "0.78rem",
+              }}
+            >
+{`Date,Description,Time,Distance,Pace,Watts,SPM,HR,Calories,Rest_Time,Rest_Distance
+2026-06-01,Steady State 6K,1:57.3,500,1:57.3,217,21,140,23,0,0
+2026-06-01,Steady State 6K,1:57.6,500,1:57.6,215,21,141,24,0,0
+2026-06-01,Steady State 6K,1:58.0,500,1:58.0,213,21,143,24,0,0
+2026-06-01,Steady State 6K,1:58.4,500,1:58.4,211,22,144,24,0,0`}
             </pre>
 
             <button
@@ -279,7 +357,10 @@ function CsvFormatGuide() {
             </button>
           </div>
 
-          {/* INTERVAL WORKOUT */}
+          {/* ==================================================
+              INTERVAL
+             ================================================== */}
+
           <div style={{ marginTop: "1.5rem" }}>
             <h3
               style={{
@@ -292,30 +373,24 @@ function CsvFormatGuide() {
             </h3>
 
             <p>
-              Use this for workouts such as{" "}
-              <strong>4 × 1000m</strong>,{" "}
-              <strong>6 × 500m</strong>, or other interval sessions.
+              Interval workouts use the{" "}
+              <strong>same detailed CSV format</strong> as
+              continuous workouts.
             </p>
 
             <p>
-              Each work interval gets its own row. The recovery
-              after the interval can be recorded using{" "}
-              <code>Rest Time</code> and/or{" "}
-              <code>Rest Distance</code>.
+              Example: <strong>4 × 1000m</strong> with 3 minutes
+              recovery between intervals.
             </p>
 
             <p>
-              Recommended columns:
-              <br />
-              <code>
-                Date, Description, Time, Distance, Pace, Watts,
-                SPM, HR, Rest Time, Rest Distance
-              </code>
+              The difference is that{" "}
+              <code>Rest_Time</code> and/or{" "}
+              <code>Rest_Distance</code> contains a non-zero value.
             </p>
 
             <p>
-              <strong>Rest Time is in seconds.</strong> For example,
-              <code>180</code> means 3 minutes of recovery.
+              <strong>Example:</strong>
             </p>
 
             <pre
@@ -328,17 +403,38 @@ function CsvFormatGuide() {
                 fontSize: "0.78rem",
               }}
             >
-{`Date,Description,Time,Distance,Pace,Watts,SPM,HR,Rest Time,Rest Distance
-2026-08-29,4 x 1000m,3:35.0,1000,1:47.5,195,28,175,180,0
-2026-08-29,4 x 1000m,3:33.0,1000,1:46.5,200,29,180,180,0
-2026-08-29,4 x 1000m,3:31.0,1000,1:45.5,205,30,183,180,0
-2026-08-29,4 x 1000m,3:30.0,1000,1:45.0,210,31,185,0,0`}
+{`Date,Description,Time,Distance,Pace,Watts,SPM,HR,Calories,Rest_Time,Rest_Distance
+2026-06-01,4 x 1000m,3:35.0,1000,1:47.5,195,28,175,100,180,0
+2026-06-01,4 x 1000m,3:33.0,1000,1:46.5,200,29,180,102,180,0
+2026-06-01,4 x 1000m,3:31.0,1000,1:45.5,205,30,183,104,180,0
+2026-06-01,4 x 1000m,3:30.0,1000,1:45.0,210,31,185,106,0,0`}
             </pre>
 
             <p>
-              The last interval normally has{" "}
-              <code>0</code> rest because there is no recovery after
-              the final repetition.
+              In this example:
+            </p>
+
+            <ul style={{ paddingLeft: "1.25rem" }}>
+              <li>
+                <code>180</code> in <code>Rest_Time</code> means{" "}
+                <strong>180 seconds / 3 minutes</strong>.
+              </li>
+
+              <li>
+                <code>0</code> in <code>Rest_Distance</code> means
+                there is no distance-based recovery.
+              </li>
+
+              <li>
+                The final interval has zero rest because it is the
+                last repetition.
+              </li>
+            </ul>
+
+            <p className="muted small">
+              The app automatically detects this as an interval
+              workout because at least one row has a non-zero rest
+              value.
             </p>
 
             <button
@@ -355,7 +451,10 @@ function CsvFormatGuide() {
             </button>
           </div>
 
-          {/* COLUMN NOTES */}
+          {/* ==================================================
+              COLUMN REFERENCE
+             ================================================== */}
+
           <div style={{ marginTop: "1.5rem" }}>
             <h3
               style={{
@@ -364,51 +463,197 @@ function CsvFormatGuide() {
                 marginBottom: "0.5rem",
               }}
             >
-              Column notes
+              CSV column reference
             </h3>
 
-            <ul style={{ paddingLeft: "1.25rem" }}>
+            <div
+              style={{
+                overflowX: "auto",
+              }}
+            >
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Column</th>
+                    <th>What it means</th>
+                    <th>Example</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr>
+                    <td>
+                      <code>Date</code>
+                    </td>
+                    <td>
+                      Date of the workout
+                    </td>
+                    <td>
+                      <code>2026-06-01</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>Description</code>
+                    </td>
+                    <td>
+                      Workout name/description
+                    </td>
+                    <td>
+                      <code>Steady State 6K</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>Time</code>
+                    </td>
+                    <td>
+                      Time for the row/split, or total time
+                      for a summary
+                    </td>
+                    <td>
+                      <code>1:57.3</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>Distance</code>
+                    </td>
+                    <td>
+                      Distance in metres
+                    </td>
+                    <td>
+                      <code>500</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>Pace</code>
+                    </td>
+                    <td>
+                      Pace per 500m
+                    </td>
+                    <td>
+                      <code>1:57.3</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>Watts</code>
+                    </td>
+                    <td>
+                      Power for the row/split
+                    </td>
+                    <td>
+                      <code>217</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>SPM</code>
+                    </td>
+                    <td>
+                      Strokes per minute
+                    </td>
+                    <td>
+                      <code>21</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>HR</code>
+                    </td>
+                    <td>
+                      Heart rate in BPM
+                    </td>
+                    <td>
+                      <code>140</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>Calories</code>
+                    </td>
+                    <td>
+                      Calories for the row/split
+                    </td>
+                    <td>
+                      <code>23</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>Rest_Time</code>
+                    </td>
+                    <td>
+                      Recovery time in seconds
+                    </td>
+                    <td>
+                      <code>180</code>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <code>Rest_Distance</code>
+                    </td>
+                    <td>
+                      Recovery distance in metres
+                    </td>
+                    <td>
+                      <code>0</code>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ==================================================
+              IMPORTANT
+             ================================================== */}
+
+          <div
+            style={{
+              marginTop: "1.5rem",
+              padding: "1rem",
+              borderRadius: "8px",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <strong>Quick rule:</strong>
+
+            <p
+              style={{
+                marginBottom: "0.5rem",
+              }}
+            >
+              If your CSV has multiple rows:
+            </p>
+
+            <ul
+              style={{
+                paddingLeft: "1.25rem",
+                marginBottom: 0,
+              }}
+            >
               <li>
-                <strong>Date</strong> is the workout date.
+                <strong>Rest_Time = 0</strong> and{" "}
+                <strong>Rest_Distance = 0</strong> → Continuous
               </li>
 
               <li>
-                <strong>Description</strong> is the workout name.
-              </li>
-
-              <li>
-                <strong>Time</strong> can be seconds or a time such
-                as <code>3:35.0</code>.
-              </li>
-
-              <li>
-                <strong>Distance</strong> is measured in metres.
-              </li>
-
-              <li>
-                <strong>Pace</strong> is the time per 500m, such as{" "}
-                <code>1:47.5</code>.
-              </li>
-
-              <li>
-                <strong>Watts</strong> is the average power for the
-                row/split.
-              </li>
-
-              <li>
-                <strong>SPM</strong> means strokes per minute.
-              </li>
-
-              <li>
-                <strong>HR</strong> means heart rate in BPM.
-              </li>
-
-              <li>
-                <strong>Rest Time</strong> is in seconds.
-              </li>
-
-              <li>
-                <strong>Rest Distance</strong> is in metres.
+                <strong>Rest_Time &gt; 0</strong> or{" "}
+                <strong>Rest_Distance &gt; 0</strong> → Interval
               </li>
             </ul>
           </div>
@@ -449,15 +694,12 @@ function CsvUploadPanel({
       const res = await workoutsApi.uploadCsv(file);
 
       /*
-       * IMPORTANT:
+       * A CSV can contain:
        *
-       * A CSV can now contain:
+       *   1 workout -> immediately open its workout page.
        *
-       *   1 workout  -> preserve old behaviour and
-       *                 immediately open its analysis page.
-       *
-       *   Multiple workouts -> stay on this page and show
-       *                        all imported workouts.
+       *   Multiple workouts -> stay here and show all imported
+       *   workouts.
        */
       if (res.workouts.length === 1) {
         onDone(res.workouts[0].id);
@@ -509,7 +751,7 @@ function CsvUploadPanel({
           </p>
 
           <p className="dropzone-hint">
-            Summary, continuous, and interval CSVs are supported.
+            Summary or detailed split exports both work.
           </p>
 
           <input
@@ -541,7 +783,6 @@ function CsvUploadPanel({
 
       {status === "done" && result && (
         <div>
-          {/* Warnings */}
           {result.warnings.map((w, i) => (
             <div
               className="upload-warning"
@@ -551,7 +792,6 @@ function CsvUploadPanel({
             </div>
           ))}
 
-          {/* Number of workouts imported */}
           <p
             className="card-title"
             style={{
@@ -564,7 +804,6 @@ function CsvUploadPanel({
             {result.workouts.length !== 1 ? "s" : ""} imported
           </p>
 
-          {/* Workout cards */}
           <div style={{ marginTop: "1rem" }}>
             {result.workouts.map((workout) => (
               <div

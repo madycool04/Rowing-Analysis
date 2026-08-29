@@ -27,6 +27,9 @@ export function WorkoutDetail() {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [similar, setSimilar] = useState<WorkoutListItem[]>([]);
+  const [previousSimilarWStroke, setPreviousSimilarWStroke] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     if (!id) return;
@@ -48,19 +51,45 @@ export function WorkoutDetail() {
         setWorkout(w);
         setAnalytics(a);
 
-        setSimilar(
-          list.items
-            .filter(
-              (x) =>
-                x.id !== w.id &&
-                Math.abs(x.total_distance_m - w.total_distance_m) /
-                  Math.max(w.total_distance_m, 1) <=
-                  0.03
-            )
-            .slice(0, 5)
-        );
+        /*
+         * A previous similar workout must:
+         * - be a different workout
+         * - be older than the current workout
+         * - be within ±3% of the current workout distance
+         *
+         * We then sort explicitly by date so the first workout
+         * is the most recent older comparable workout.
+         */
+        const similarWorkouts = list.items
+          .filter(
+            (x) =>
+              x.id !== w.id &&
+              new Date(x.date).getTime() <
+                new Date(w.date).getTime() &&
+              Math.abs(x.total_distance_m - w.total_distance_m) /
+                Math.max(w.total_distance_m, 1) <=
+                0.03
+          )
+          .sort(
+            (a, b) =>
+              new Date(b.date).getTime() -
+              new Date(a.date).getTime()
+          )
+          .slice(0, 5);
 
+        setSimilar(similarWorkouts);
+
+        /*
+         * The main workout can now render immediately.
+         * Comparison analytics are loaded separately so they
+         * don't keep the whole page on the loading screen.
+         */
         setStatus("ready");
+
+        void findPreviousSimilarWStroke(
+          similarWorkouts,
+          cancelled
+        );
       })
       .catch((err) => {
         if (cancelled) return;
@@ -76,8 +105,68 @@ export function WorkoutDetail() {
     };
   }, [id]);
 
+  async function findPreviousSimilarWStroke(
+    candidates: WorkoutListItem[],
+    cancelled: boolean
+  ) {
+    /*
+     * Candidates are already ordered from newest to oldest.
+     * We use the first older comparable workout that actually
+     * has W/stroke data.
+     */
+    try {
+      const candidateResults = await Promise.all(
+        candidates.map(async (candidate) => {
+          try {
+            const candidateAnalytics =
+              await analyticsApi.workout(candidate.id);
+
+            const metrics =
+              candidateAnalytics.metrics as Record<string, any>;
+
+            const wattsPerStroke =
+              metrics.watts_per_stroke;
+
+            if (
+              wattsPerStroke &&
+              wattsPerStroke.average_w_per_stroke != null
+            ) {
+              return {
+                date: candidate.date,
+                value: Number(
+                  wattsPerStroke.average_w_per_stroke
+                ),
+              };
+            }
+
+            return null;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      if (cancelled) return;
+
+      const previous = candidateResults.find(
+        (result) => result != null
+      );
+
+      setPreviousSimilarWStroke(
+        previous?.value ?? null
+      );
+    } catch {
+      if (!cancelled) {
+        setPreviousSimilarWStroke(null);
+      }
+    }
+  }
+
   async function handleDelete() {
-    if (!workout || !confirm("Delete this workout? This can't be undone.")) {
+    if (
+      !workout ||
+      !confirm("Delete this workout? This can't be undone.")
+    ) {
       return;
     }
 
@@ -160,6 +249,45 @@ export function WorkoutDetail() {
   const decoupling = m.cardiac_decoupling;
   const drift = m.hr_drift;
   const wstroke = m.watts_per_stroke;
+
+  const currentWStroke =
+    wstroke?.average_w_per_stroke != null
+      ? Number(wstroke.average_w_per_stroke)
+      : null;
+
+  const wStrokeChange =
+    currentWStroke != null &&
+    previousSimilarWStroke != null
+      ? currentWStroke - previousSimilarWStroke
+      : null;
+
+  const wStrokeChangePct =
+    currentWStroke != null &&
+    previousSimilarWStroke != null &&
+    previousSimilarWStroke !== 0 &&
+    wStrokeChange != null
+      ? (wStrokeChange / previousSimilarWStroke) * 100
+      : null;
+
+  /*
+   * Use the displayed precision when deciding how to describe
+   * a change. This prevents awkward output such as:
+   *
+   * +0.00 W/stroke (+0.0%)
+   * You produced more...
+   *
+   * If the difference disappears when rounded for display,
+   * we describe it as no meaningful change at displayed precision.
+   */
+  const displayedWStrokeChange =
+    wStrokeChange != null
+      ? Number(wStrokeChange.toFixed(2))
+      : null;
+
+  const displayedWStrokeChangePct =
+    wStrokeChangePct != null
+      ? Number(wStrokeChangePct.toFixed(1))
+      : null;
 
   const calories = workout.segments
     .flatMap((s) => s.splits)
@@ -330,7 +458,7 @@ export function WorkoutDetail() {
             <>
               <div className="pacing-metrics">
                 <MetricRow
-                  label="Pace variation (CV)"
+                  label="Pace variation"
                   value={
                     pacing.pacing_cv_pct != null
                       ? `${pacing.pacing_cv_pct.toFixed(1)}%`
@@ -360,18 +488,12 @@ export function WorkoutDetail() {
                 Lower variation means your pace stayed more even.
                 Pace fade shows how much your pace slowed toward
                 the end of the workout.
-              </p>
-
-              <p className="metric-note">
-                <strong>Research context</strong>
                 <br />
-                An analysis of 636 crews from World and European
-                Championship A-finals found that medal-winning crews
-                averaged a split-time variation (CV) of 1.72%, compared
-                with 2.00% for non-podium crews. This suggests that
-                lower pacing variation is associated with higher-level
-                race performance, although there is no single "elite"
-                CV target for every workout.
+                <br />
+                <em>
+                  Consistency labels are general guidelines, not
+                  official rowing standards.
+                </em>
               </p>
             </>
           )}
@@ -400,11 +522,99 @@ export function WorkoutDetail() {
             <>
               <MetricRow
                 label="Average W/stroke"
-                value={wstroke.average_w_per_stroke.toFixed(2)}
+                value={
+                  currentWStroke != null
+                    ? `${currentWStroke.toFixed(2)} W/stroke`
+                    : "—"
+                }
               />
 
               <p className="metric-note">
-                {wstroke.note}
+                <strong>What does this mean?</strong>
+                <br />
+                W/stroke is a simple measure of how much power you
+                produced relative to your stroke rate. A higher
+                value means you produced more power relative to
+                your stroke rate. However, higher is not
+                automatically better — the ideal relationship
+                between power and stroke rate depends on the
+                workout and training goal.
+              </p>
+
+              <div className="metric-note">
+                <strong>
+                  Previous similar workout
+                </strong>
+
+                {previousSimilarWStroke != null &&
+                currentWStroke != null &&
+                wStrokeChange != null &&
+                wStrokeChangePct != null ? (
+                  <>
+                    <MetricRow
+                      label="Previous similar"
+                      value={`${previousSimilarWStroke.toFixed(
+                        2
+                      )} W/stroke`}
+                    />
+
+                    <MetricRow
+                      label="Current"
+                      value={`${currentWStroke.toFixed(
+                        2
+                      )} W/stroke`}
+                    />
+
+                    <MetricRow
+                      label="Change"
+                      value={`${
+                        displayedWStrokeChange! >= 0
+                          ? "+"
+                          : ""
+                      }${displayedWStrokeChange!.toFixed(
+                        2
+                      )} W/stroke (${
+                        displayedWStrokeChangePct! >= 0
+                          ? "+"
+                          : ""
+                      }${displayedWStrokeChangePct!.toFixed(
+                        1
+                      )}%)`}
+                    />
+
+                    <p>
+                      {displayedWStrokeChange === 0 ? (
+                        <>
+                          No meaningful change in W/stroke at the
+                          displayed precision.
+                        </>
+                      ) : displayedWStrokeChange! > 0 ? (
+                        <>
+                          You produced more power relative to your
+                          stroke rate than in your previous similar
+                          workout.
+                        </>
+                      ) : (
+                        <>
+                          You produced less power relative to your
+                          stroke rate than in your previous similar
+                          workout.
+                        </>
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    No previous similar workout with W/stroke data
+                    is available for comparison.
+                  </p>
+                )}
+              </div>
+
+              <p className="metric-note">
+                <strong>Important:</strong> W/stroke is a
+                descriptive proxy, not a direct measure of
+                mechanical work per stroke or technical efficiency.
               </p>
             </>
           )}
@@ -483,7 +693,9 @@ export function WorkoutDetail() {
 
               <MetricRow
                 label="Consistency (CV)"
-                value={`${intervals.interval_consistency_cv_pct?.toFixed(1)}%`}
+                value={`${intervals.interval_consistency_cv_pct?.toFixed(
+                  1
+                )}%`}
               />
 
               <MetricRow

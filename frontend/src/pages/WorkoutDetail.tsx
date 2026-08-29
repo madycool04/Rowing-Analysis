@@ -458,7 +458,7 @@ export function WorkoutDetail() {
             <>
               <div className="pacing-metrics">
                 <MetricRow
-                  label="Pace variation"
+                  label="Pace variation (CV)"
                   value={
                     pacing.pacing_cv_pct != null
                       ? `${pacing.pacing_cv_pct.toFixed(1)}%`
@@ -476,7 +476,7 @@ export function WorkoutDetail() {
                 {pacing.fastest_split && (
                   <MetricRow
                     label="Fastest split"
-                    value={`#${pacing.fastest_split.ordinal + 1}`}
+                    value={`#${pacing.fastest_split.ordinal}`}
                   />
                 )}
               </div>
@@ -488,8 +488,22 @@ export function WorkoutDetail() {
                 Lower variation means your pace stayed more even.
                 Pace fade shows how much your pace slowed toward
                 the end of the workout.
+              </p>
+
+              <p className="metric-note">
+                <strong>Research context</strong>
                 <br />
-                <br />
+                An analysis of 636 crews from World and European
+                Championship A-finals found that medal-winning
+                crews averaged a split-time variation (CV) of
+                1.72%, compared with 2.00% for non-podium crews.
+                This suggests that lower pacing variation is
+                associated with higher-level race performance,
+                although there is no single "elite" CV target for
+                every workout.
+              </p>
+
+              <p className="metric-note">
                 <em>
                   Consistency labels are general guidelines, not
                   official rowing standards.

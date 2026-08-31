@@ -743,6 +743,22 @@ export function WorkoutDetail() {
               </p>
             </>
           )}
+        </MetricCard>
+
+        <MetricCard
+          title="HR Drift"
+          available={!!drift}
+          unavailableReason={
+            dq.hr_drift_unavailable_reason
+          }
+        >
+          {drift && (
+            <MetricRow
+              label="Drift"
+              value={`${drift.drift_pct.toFixed(1)}%`}
+            />
+          )}
+        </MetricCard>
 
         <MetricCard
           title="HR Drift"

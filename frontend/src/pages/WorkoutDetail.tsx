@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { analyticsApi, extractErrorMessage, workoutsApi } from "../api/client";
 import { HRChart, type HrZoneDatum } from "../components/HRChart";
@@ -634,40 +634,28 @@ export function WorkoutDetail() {
           )}
         </MetricCard>
 
-         <MetricCard
+        <MetricCard
           title={
-            <>
-              Efficiency Factor{" "}
-              <span
-                title={
-                  "EF is most useful when comparing your own similar workouts. " +
-                  "If EF increases at a similar pace and workout duration, it " +
-                  "generally means you are producing more output for the " +
-                  "cardiovascular effort required. An upward trend is generally " +
-                  "more useful than the absolute number. EF is not a universal " +
-                  "fitness score, and changes in pace, intensity, duration, " +
-                  "fatigue, and conditions can affect it."
-                }
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "17px",
-                  height: "17px",
-                  marginLeft: "6px",
-                  border: "1px solid currentColor",
-                  borderRadius: "50%",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  cursor: "help",
-                  opacity: 0.75,
-                  verticalAlign: "middle",
-                }}
-                aria-label="Information about Efficiency Factor"
-              >
-                i
-              </span>
-            </>
+            <MetricInfo
+              label="Efficiency Factor"
+              explanation={
+                <>
+                  EF is most useful when comparing your own similar
+                  workouts.
+                  <br />
+                  <br />
+                  If EF increases at a similar pace and workout
+                  duration, it generally means you are producing more
+                  output for the cardiovascular effort required.
+                  <br />
+                  <br />
+                  An upward trend is generally more useful than the
+                  absolute number. EF is not a universal fitness score,
+                  and changes in pace, intensity, duration, fatigue,
+                  and conditions can affect it.
+                </>
+              }
+            />
           }
           available={!!ef}
           unavailableReason={
@@ -690,41 +678,33 @@ export function WorkoutDetail() {
 
         <MetricCard
           title={
-            <>
-              Cardiac Decoupling{" "}
-              <span
-                title={
-                  "Cardiac decoupling describes how much your heart rate " +
-                  "rises relative to your rowing output as the workout " +
-                  "progresses. Lower decoupling generally suggests better " +
-                  "aerobic durability when comparing similar steady-state " +
-                  "workouts. Compare similar workouts over time rather than " +
-                  "treating a single value as good or bad. Heat, hydration, " +
-                  "fatigue, workout intensity, and heart-rate measurement " +
-                  "quality can all affect the result. Around 5% is sometimes " +
-                  "used as a rough endurance-sport heuristic, but it is not " +
-                  "a rowing-specific diagnostic threshold."
-                }
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "17px",
-                  height: "17px",
-                  marginLeft: "6px",
-                  border: "1px solid currentColor",
-                  borderRadius: "50%",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  cursor: "help",
-                  opacity: 0.75,
-                  verticalAlign: "middle",
-                }}
-                aria-label="Information about Cardiac Decoupling"
-              >
-                i
-              </span>
-            </>
+            <MetricInfo
+              label="Cardiac Decoupling"
+              explanation={
+                <>
+                  Cardiac decoupling describes how much your heart
+                  rate rises relative to your rowing output as the
+                  workout progresses.
+                  <br />
+                  <br />
+                  Lower decoupling generally suggests better aerobic
+                  durability when comparing similar steady-state
+                  workouts.
+                  <br />
+                  <br />
+                  Compare similar workouts over time rather than
+                  treating a single value as good or bad. Heat,
+                  hydration, fatigue, workout intensity, and
+                  heart-rate measurement quality can all affect
+                  the result.
+                  <br />
+                  <br />
+                  Around 5% is sometimes used as a rough
+                  endurance-sport heuristic, but it is not a
+                  rowing-specific diagnostic threshold.
+                </>
+              }
+            />
           }
           available={!!decoupling}
           unavailableReason={
@@ -945,6 +925,82 @@ export function WorkoutDetail() {
         </div>
       )}
     </Layout>
+  );
+}
+
+function MetricInfo({
+  label,
+  explanation,
+}: {
+  label: string;
+  explanation: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <span
+      style={{
+        position: "relative",
+        display: "inline-flex",
+        alignItems: "center",
+      }}
+    >
+      <span>{label}</span>
+
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label={`More information about ${label}`}
+        aria-expanded={open}
+        style={{
+          marginLeft: "7px",
+          width: "19px",
+          height: "19px",
+          padding: 0,
+          border: "1px solid currentColor",
+          borderRadius: "50%",
+          background: "transparent",
+          color: "inherit",
+          fontSize: "12px",
+          fontWeight: 700,
+          lineHeight: "17px",
+          textAlign: "center",
+          cursor: "pointer",
+          opacity: 0.65,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          verticalAlign: "middle",
+        }}
+      >
+        ?
+      </button>
+
+      {open && (
+        <span
+          role="tooltip"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 10px)",
+            left: 0,
+            zIndex: 20,
+            width: "min(340px, calc(100vw - 48px))",
+            padding: "13px 15px",
+            border: "1px solid rgba(255, 255, 255, 0.12)",
+            borderRadius: "8px",
+            background: "#15191d",
+            color: "inherit",
+            fontSize: "13px",
+            fontWeight: 400,
+            lineHeight: 1.5,
+            textAlign: "left",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.28)",
+          }}
+        >
+          {explanation}
+        </span>
+      )}
+    </span>
   );
 }
 

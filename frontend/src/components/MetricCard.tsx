@@ -1,44 +1,32 @@
 import type { ReactNode } from "react";
 
-type MetricCardProps = {
-  title: ReactNode;
+interface MetricCardProps {
+  title: string;
   available: boolean;
-  unavailableReason?: string;
-  children: ReactNode;
-};
+  unavailableReason?: string | null;
+  children?: ReactNode;
+}
 
-export function MetricCard({
-  title,
-  available,
-  unavailableReason,
-  children,
-}: MetricCardProps) {
+export function MetricCard({ title, available, unavailableReason, children }: MetricCardProps) {
   return (
-    <div className="card metric-card">
-      <p className="card-title">{title}</p>
-
+    <div className="metric-card">
+      <p className="metric-card-title">{title}</p>
       {available ? (
-        children
+        <div className="metric-card-body">{children}</div>
       ) : (
-        <p className="metric-unavailable">
-          {unavailableReason ?? "Not enough data available."}
+        <p className="metric-card-unavailable">
+          {unavailableReason ?? "Not enough data to calculate this yet."}
         </p>
       )}
     </div>
   );
 }
 
-export function MetricRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+export function MetricRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="metric-row">
-      <span>{label}</span>
-      <strong>{value}</strong>
+      <span className="metric-row-label">{label}</span>
+      <span className="metric-row-value">{value}</span>
     </div>
   );
 }

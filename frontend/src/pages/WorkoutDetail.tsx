@@ -476,7 +476,7 @@ export function WorkoutDetail() {
                 {pacing.fastest_split && (
                   <MetricRow
                     label="Fastest split"
-                    value={`#${pacing.fastest_split.ordinal}`}
+                    value={`#${pacing.fastest_split.ordinal + 1}`}
                   />
                 )}
               </div>

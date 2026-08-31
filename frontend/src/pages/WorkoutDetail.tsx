@@ -743,8 +743,6 @@ export function WorkoutDetail() {
               </p>
             </>
           )}
-```
-
 
         <MetricCard
           title="HR Drift"

@@ -634,9 +634,41 @@ export function WorkoutDetail() {
           )}
         </MetricCard>
 
-        ```tsx
-        <MetricCard
-          title="Efficiency Factor"
+         <MetricCard
+          title={
+            <>
+              Efficiency Factor{" "}
+              <span
+                title={
+                  "EF is most useful when comparing your own similar workouts. " +
+                  "If EF increases at a similar pace and workout duration, it " +
+                  "generally means you are producing more output for the " +
+                  "cardiovascular effort required. An upward trend is generally " +
+                  "more useful than the absolute number. EF is not a universal " +
+                  "fitness score, and changes in pace, intensity, duration, " +
+                  "fatigue, and conditions can affect it."
+                }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "17px",
+                  height: "17px",
+                  marginLeft: "6px",
+                  border: "1px solid currentColor",
+                  borderRadius: "50%",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  cursor: "help",
+                  opacity: 0.75,
+                  verticalAlign: "middle",
+                }}
+                aria-label="Information about Efficiency Factor"
+              >
+                i
+              </span>
+            </>
+          }
           available={!!ef}
           unavailableReason={
             dq.efficiency_factor_unavailable_reason
@@ -652,42 +684,48 @@ export function WorkoutDetail() {
               <p className="metric-note">
                 {ef.note}
               </p>
-
-              <div className="metric-note">
-                <strong>How to interpret it</strong>
-                <br />
-                EF is most useful when comparing your own similar
-                workouts. If your EF increases at a similar pace
-                and workout duration, it generally means you are
-                producing more output for the cardiovascular effort
-                required. If EF decreases under otherwise similar
-                conditions, it may indicate greater fatigue, reduced
-                aerobic performance, or a higher cardiovascular cost.
-              </div>
-
-              <div className="metric-note">
-                <strong>What to look for</strong>
-                <br />
-                Don't judge{" "}
-                {ef.efficiency_factor.toFixed(2)} as simply
-                "good" or "bad." Compare it with your previous
-                steady-state workouts at similar intensity and
-                duration. A consistent upward trend is generally
-                more useful than the absolute number.
-              </div>
-
-              <p className="metric-note">
-                <strong>Important:</strong> EF is a comparison
-                metric, not a universal fitness score. Changes in
-                pace, workout intensity, duration, fatigue, and
-                conditions can affect the value.
-              </p>
             </>
           )}
         </MetricCard>
 
         <MetricCard
-          title="Cardiac Decoupling"
+          title={
+            <>
+              Cardiac Decoupling{" "}
+              <span
+                title={
+                  "Cardiac decoupling describes how much your heart rate " +
+                  "rises relative to your rowing output as the workout " +
+                  "progresses. Lower decoupling generally suggests better " +
+                  "aerobic durability when comparing similar steady-state " +
+                  "workouts. Compare similar workouts over time rather than " +
+                  "treating a single value as good or bad. Heat, hydration, " +
+                  "fatigue, workout intensity, and heart-rate measurement " +
+                  "quality can all affect the result. Around 5% is sometimes " +
+                  "used as a rough endurance-sport heuristic, but it is not " +
+                  "a rowing-specific diagnostic threshold."
+                }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "17px",
+                  height: "17px",
+                  marginLeft: "6px",
+                  border: "1px solid currentColor",
+                  borderRadius: "50%",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  cursor: "help",
+                  opacity: 0.75,
+                  verticalAlign: "middle",
+                }}
+                aria-label="Information about Cardiac Decoupling"
+              >
+                i
+              </span>
+            </>
+          }
           available={!!decoupling}
           unavailableReason={
             dq.cardiac_decoupling_unavailable_reason
@@ -703,59 +741,8 @@ export function WorkoutDetail() {
               <p className="metric-note">
                 {decoupling.note}
               </p>
-
-              <div className="metric-note">
-                <strong>How to interpret it</strong>
-                <br />
-                Cardiac decoupling describes how much your heart
-                rate rises relative to your rowing output as the
-                workout progresses. A low value means your heart
-                rate and output remained relatively stable. A higher
-                value means your heart rate increased more relative
-                to the power or pace you were producing.
-              </div>
-
-              <div className="metric-note">
-                <strong>What to look for</strong>
-                <br />
-                When comparing similar steady-state workouts, lower
-                decoupling generally suggests better aerobic
-                durability. A value of{" "}
-                {decoupling.decoupling_pct.toFixed(1)}% indicates
-                noticeable cardiovascular drift during this workout.
-                However, don't judge the result in isolation — heat,
-                hydration, fatigue, workout intensity, and heart-rate
-                measurement quality can all affect it.
-              </div>
-
-              <div className="metric-note">
-                <strong>Best use</strong>
-                <br />
-                Compare similar workouts over time. If you can
-                maintain the same pace or power with progressively
-                lower decoupling, that is a more meaningful sign of
-                improving aerobic durability.
-              </div>
-
-              <div className="metric-note">
-                <strong>Reference</strong>
-                <br />
-                Around 5% is sometimes used as a rough
-                endurance-sport heuristic for aerobic durability,
-                but it is not a rowing-specific diagnostic threshold.
-                Use trends between comparable workouts rather than
-                treating 5% as a pass/fail value.
-              </div>
-
-              <p className="metric-note">
-                <strong>Important:</strong> Cardiac decoupling can be
-                affected by heat, hydration, fatigue, workout
-                intensity, and heart-rate measurement quality.
-                A single result should not be interpreted in isolation.
-              </p>
             </>
           )}
-        </MetricCard>
 ```
 
 

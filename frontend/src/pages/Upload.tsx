@@ -107,10 +107,10 @@ const SUMMARY_CSV_TEMPLATE = `Date,Description,Time,Distance,Avg Heart Rate
  * Rest_Distance = 0
  */
 const CONTINUOUS_CSV_TEMPLATE = `Date,Description,Time,Distance,Pace,Watts,SPM,HR,Calories,Rest_Time,Rest_Distance
-2026-06-01,Steady State 6K,1:57.3,500,1:57.3,217,21,140,23,0,0
-2026-06-01,Steady State 6K,1:57.6,500,1:57.6,215,21,141,24,0,0
-2026-06-01,Steady State 6K,1:58.0,500,1:58.0,213,21,143,24,0,0
-2026-06-01,Steady State 6K,1:58.4,500,1:58.4,211,22,144,24,0,0
+2026-06-01,Steady State 2K,1:57.3,500,1:57.3,217,21,140,23,0,0
+2026-06-01,Steady State 2K,1:57.6,500,1:57.6,215,21,141,24,0,0
+2026-06-01,Steady State 2K,1:58.0,500,1:58.0,213,21,143,24,0,0
+2026-06-01,Steady State 2K,1:58.4,500,1:58.4,211,22,144,24,0,0
 `;
 
 /*
@@ -281,7 +281,7 @@ function CsvFormatGuide() {
             </p>
 
             <p>
-              Example: a <strong>6K steady-state row</strong> with
+              Example: a <strong>2K steady-state row</strong> with
               one row for every 500m.
             </p>
 
@@ -337,10 +337,10 @@ function CsvFormatGuide() {
               }}
             >
 {`Date,Description,Time,Distance,Pace,Watts,SPM,HR,Calories,Rest_Time,Rest_Distance
-2026-06-01,Steady State 6K,1:57.3,500,1:57.3,217,21,140,23,0,0
-2026-06-01,Steady State 6K,1:57.6,500,1:57.6,215,21,141,24,0,0
-2026-06-01,Steady State 6K,1:58.0,500,1:58.0,213,21,143,24,0,0
-2026-06-01,Steady State 6K,1:58.4,500,1:58.4,211,22,144,24,0,0`}
+2026-06-01,Steady State 2K,1:57.3,500,1:57.3,217,21,140,23,0,0
+2026-06-01,Steady State 2K,1:57.6,500,1:57.6,215,21,141,24,0,0
+2026-06-01,Steady State 2K,1:58.0,500,1:58.0,213,21,143,24,0,0
+2026-06-01,Steady State 2K,1:58.4,500,1:58.4,211,22,144,24,0,0`}
             </pre>
 
             <button
@@ -501,7 +501,7 @@ function CsvFormatGuide() {
                       Workout name/description
                     </td>
                     <td>
-                      <code>Steady State 6K</code>
+                      <code>Steady State 2K</code>
                     </td>
                   </tr>
 

@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { analyticsApi, extractErrorMessage, workoutsApi } from "../api/client";
+import { analyticsApi, coachApi, commentsApi, extractErrorMessage, workoutsApi } from "../api/client";
 import { HRChart, type HrZoneDatum } from "../components/HRChart";
 import { Layout } from "../components/Layout";
 import { LoadingState } from "../components/LoadingState";
 import { MetricCard, MetricRow } from "../components/MetricCard";
 import { WorkoutChart } from "../components/WorkoutChart";
-import type { AnalyticsEnvelope, Workout, WorkoutListItem } from "../types";
+import { useAuth } from "../context/AuthContext";
+import type { AnalyticsEnvelope, Workout, WorkoutComment, WorkoutListItem } from "../types";
 import {
   categoryBadgeClass,
   categoryLabel,
@@ -16,8 +17,11 @@ import {
 } from "../utils/format";
 
 export function WorkoutDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id, athleteId } = useParams<{ id: string; athleteId?: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isCoach = user?.role === "coach";
+  const coachAthleteId = Number(athleteId);
 
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsEnvelope | null>(null);
@@ -30,26 +34,32 @@ export function WorkoutDetail() {
   const [previousSimilarWStroke, setPreviousSimilarWStroke] = useState<
     number | null
   >(null);
+  const [comments, setComments] = useState<WorkoutComment[]>([]);
+  const [commentBody, setCommentBody] = useState("");
+  const [commenting, setCommenting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
     let cancelled = false;
 
-    Promise.all([
-      workoutsApi.get(Number(id)),
-      analyticsApi.workout(Number(id)),
-      workoutsApi.list({
-        page: 1,
-        page_size: 100,
-        sort: "newest",
-      }),
-    ])
-      .then(([w, a, list]) => {
+    const workoutRequest = isCoach
+      ? coachApi.workout(coachAthleteId, Number(id))
+      : workoutsApi.get(Number(id));
+    const analyticsRequest = isCoach
+      ? coachApi.workoutAnalytics(coachAthleteId, Number(id))
+      : analyticsApi.workout(Number(id));
+    const listRequest = isCoach
+      ? coachApi.workouts(coachAthleteId, 1, 100)
+      : workoutsApi.list({ page: 1, page_size: 100, sort: "newest" });
+
+    Promise.all([workoutRequest, analyticsRequest, listRequest, commentsApi.list(Number(id))])
+      .then(([w, a, list, loadedComments]) => {
         if (cancelled) return;
 
         setWorkout(w);
         setAnalytics(a);
+        setComments(loadedComments);
 
         /*
          * A previous similar workout must:
@@ -103,7 +113,7 @@ export function WorkoutDetail() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, isCoach, coachAthleteId]);
 
   async function findPreviousSimilarWStroke(
     candidates: WorkoutListItem[],
@@ -118,8 +128,9 @@ export function WorkoutDetail() {
       const candidateResults = await Promise.all(
         candidates.map(async (candidate) => {
           try {
-            const candidateAnalytics =
-              await analyticsApi.workout(candidate.id);
+            const candidateAnalytics = isCoach
+              ? await coachApi.workoutAnalytics(coachAthleteId, candidate.id)
+              : await analyticsApi.workout(candidate.id);
 
             const metrics =
               candidateAnalytics.metrics as Record<string, any>;
@@ -180,6 +191,21 @@ export function WorkoutDetail() {
         extractErrorMessage(err, "Couldn't delete this workout.")
       );
       setDeleting(false);
+    }
+  }
+
+  async function handleCommentSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!isCoach || !workout || !commentBody.trim()) return;
+    setCommenting(true);
+    try {
+      const comment = await coachApi.addComment(coachAthleteId, workout.id, commentBody.trim());
+      setComments((items) => [...items, comment]);
+      setCommentBody("");
+    } catch (err) {
+      setError(extractErrorMessage(err, "Couldn't add the coach comment."));
+    } finally {
+      setCommenting(false);
     }
   }
 
@@ -319,14 +345,14 @@ export function WorkoutDetail() {
           </p>
         </div>
 
-        <button
-          className="btn-secondary"
-          onClick={handleDelete}
-          disabled={deleting}
-        >
-          {deleting ? "Deleting..." : "Delete"}
-        </button>
+        {!isCoach && (
+          <button className="btn-secondary" onClick={handleDelete} disabled={deleting}>
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
+        )}
       </div>
+
+      {error && <div className="auth-error" style={{ margin: "1rem 0" }}>{error}</div>}
 
       <div className="stat-grid">
         <StatBlock
@@ -754,7 +780,7 @@ export function WorkoutDetail() {
                 <button
                   className="btn-secondary"
                   onClick={() =>
-                    navigate(`/workouts/${other.id}`)
+                    navigate(isCoach ? `/coach/athletes/${coachAthleteId}/workouts/${other.id}` : `/workouts/${other.id}`)
                   }
                 >
                   Open comparison workout
@@ -860,6 +886,46 @@ export function WorkoutDetail() {
           </div>
         </div>
       )}
+
+      <div className="card" style={{ marginTop: "1rem" }}>
+        <p className="card-title">Coach Comments</p>
+        {comments.length === 0 ? (
+          <p className="metric-card-unavailable">No coach comments have been added.</p>
+        ) : (
+          <div className="comment-list">
+            {comments.map((comment) => (
+              <article className="coach-comment" key={comment.id}>
+                <div className="coach-comment-meta">
+                  <strong>{comment.coach_name}</strong>
+                  <span>{formatDate(comment.created_at)}</span>
+                </div>
+                <p>{comment.body}</p>
+              </article>
+            ))}
+          </div>
+        )}
+        {isCoach && (
+          <form className="comment-form" onSubmit={handleCommentSubmit}>
+            <label className="field">
+              Add a comment
+              <textarea
+                value={commentBody}
+                onChange={(event) => setCommentBody(event.target.value)}
+                maxLength={2000}
+                rows={4}
+                placeholder="Share concise feedback about this workout..."
+                required
+              />
+            </label>
+            <div className="comment-form-actions">
+              <span>{commentBody.length}/2000</span>
+              <button className="btn-primary" type="submit" disabled={commenting || !commentBody.trim()}>
+                {commenting ? "Saving..." : "Add Comment"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </Layout>
   );
 }

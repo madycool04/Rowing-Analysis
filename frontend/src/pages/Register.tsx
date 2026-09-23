@@ -11,6 +11,8 @@ export function Register() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"athlete" | "coach">("athlete");
+  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -25,11 +27,11 @@ export function Register() {
 
     setIsSubmitting(true);
     try {
-      await register(email, password);
+      await register(email, password, role, displayName);
       // Signup auto-creates and auto-selects a default athlete profile,
       // so the new user goes straight to the dashboard - never an empty
       // athlete-selection screen.
-      navigate("/", { replace: true });
+      navigate(role === "coach" ? "/coach" : "/", { replace: true });
     } catch (err) {
       setError(extractErrorMessage(err, "Could not create your account."));
     } finally {
@@ -44,6 +46,29 @@ export function Register() {
         <p className="auth-subtitle">Start tracking your rowing performance.</p>
 
         {error && <div className="auth-error">{error}</div>}
+
+        <label className="field">
+          <span>Account type</span>
+          <select className="select" value={role} onChange={(e) => setRole(e.target.value as "athlete" | "coach")}>
+            <option value="athlete">Athlete</option>
+            <option value="coach">Coach</option>
+          </select>
+        </label>
+
+        {role === "coach" && (
+          <label className="field">
+            <span>Coach name</span>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Coach Carter"
+              required
+              maxLength={255}
+              autoComplete="name"
+            />
+          </label>
+        )}
 
         <label className="field">
           <span>Email</span>

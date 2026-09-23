@@ -15,7 +15,12 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    role?: "athlete" | "coach",
+    displayName?: string,
+  ) => Promise<void>;
   logout: () => void;
   /** Lets pages that mutate the athlete profile (e.g. settings) refresh context state. */
   setAthlete: (athlete: Athlete) => void;
@@ -43,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(me);
         // /auth/me doesn't return the athlete profile, so once we know the
         // token is valid we still need the athlete separately.
-        return athletesApi.list();
+        return me.role === "athlete" ? athletesApi.list() : Promise.resolve([]);
       })
       .then((athletes) => {
         if (athletes.length > 0) setAthleteState(athletes[0]);
@@ -63,8 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAthleteState(res.athlete);
   }, []);
 
-  const register = useCallback(async (email: string, password: string) => {
-    const res = await authApi.register(email, password);
+  const register = useCallback(async (
+    email: string,
+    password: string,
+    role: "athlete" | "coach" = "athlete",
+    displayName?: string,
+  ) => {
+    const res = await authApi.register(email, password, role, displayName);
     setStoredToken(res.access_token);
     setUser(res.user);
     setAthleteState(res.athlete);

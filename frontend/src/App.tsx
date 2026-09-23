@@ -1,5 +1,7 @@
-import { Route, Routes } from "react-router-dom";
+import type { ReactNode } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { RoleRoute } from "./components/RoleRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { Dashboard } from "./pages/Dashboard";
 import { History } from "./pages/History";
@@ -12,6 +14,23 @@ import { TrainingLoad } from "./pages/TrainingLoad";
 import { Trends } from "./pages/Trends";
 import { Upload } from "./pages/Upload";
 import { WorkoutDetail } from "./pages/WorkoutDetail";
+import { CoachDashboard } from "./pages/CoachDashboard";
+import { CoachAthlete } from "./pages/CoachAthlete";
+import { CoachConnections } from "./pages/CoachConnections";
+import { useAuth } from "./context/AuthContext";
+
+function Home() {
+  const { user } = useAuth();
+  return user?.role === "coach" ? <Navigate to="/coach" replace /> : <Dashboard />;
+}
+
+function AthleteOnly({ children }: { children: ReactNode }) {
+  return <ProtectedRoute><RoleRoute role="athlete">{children}</RoleRoute></ProtectedRoute>;
+}
+
+function CoachOnly({ children }: { children: ReactNode }) {
+  return <ProtectedRoute><RoleRoute role="coach">{children}</RoleRoute></ProtectedRoute>;
+}
 
 function App() {
   return (
@@ -23,66 +42,59 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Home />
             </ProtectedRoute>
           }
         />
         <Route
           path="/upload"
           element={
-            <ProtectedRoute>
-              <Upload />
-            </ProtectedRoute>
+            <AthleteOnly><Upload /></AthleteOnly>
           }
         />
         <Route
           path="/history"
           element={
-            <ProtectedRoute>
-              <History />
-            </ProtectedRoute>
+            <AthleteOnly><History /></AthleteOnly>
           }
         />
         <Route
           path="/workouts/:id"
           element={
-            <ProtectedRoute>
-              <WorkoutDetail />
-            </ProtectedRoute>
+            <AthleteOnly><WorkoutDetail /></AthleteOnly>
           }
         />
         <Route
           path="/trends"
           element={
-            <ProtectedRoute>
-              <Trends />
-            </ProtectedRoute>
+            <AthleteOnly><Trends /></AthleteOnly>
           }
         />
         <Route
           path="/performance"
           element={
-            <ProtectedRoute>
-              <Performance />
-            </ProtectedRoute>
+            <AthleteOnly><Performance /></AthleteOnly>
           }
         />
         <Route
           path="/training-load"
           element={
-            <ProtectedRoute>
-              <TrainingLoad />
-            </ProtectedRoute>
+            <AthleteOnly><TrainingLoad /></AthleteOnly>
           }
         />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/profile" element={<AthleteOnly><Profile /></AthleteOnly>} />
+        <Route path="/coaches" element={<AthleteOnly><CoachConnections /></AthleteOnly>} />
         <Route
           path="/predict"
           element={
-            <ProtectedRoute>
-              <Predict />
-            </ProtectedRoute>
+            <AthleteOnly><Predict /></AthleteOnly>
           }
+        />
+        <Route path="/coach" element={<CoachOnly><CoachDashboard /></CoachOnly>} />
+        <Route path="/coach/athletes/:athleteId" element={<CoachOnly><CoachAthlete /></CoachOnly>} />
+        <Route
+          path="/coach/athletes/:athleteId/workouts/:id"
+          element={<CoachOnly><WorkoutDetail /></CoachOnly>}
         />
       </Routes>
     </AuthProvider>

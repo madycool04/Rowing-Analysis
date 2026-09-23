@@ -25,7 +25,7 @@ def import_all_models() -> None:
     before create_all()/Alembic autogenerate runs. Extended as models are
     added in later phases.
     """
-    from app.models import user, athlete, workout, segment, split, prediction  # noqa: F401
+    from app.models import athlete, coach, prediction, segment, split, user, workout  # noqa: F401
 
 
 def create_all_tables() -> None:

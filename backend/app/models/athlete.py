@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.coach import CoachAthleteAssignment, CoachAthleteInvitation
     from app.models.user import User
     from app.models.workout import Workout
     from app.models.prediction import Prediction
@@ -75,5 +76,11 @@ class Athlete(Base):
         back_populates="athlete", cascade="all, delete-orphan"
     )
     predictions: Mapped[list["Prediction"]] = relationship(
+        back_populates="athlete", cascade="all, delete-orphan"
+    )
+    coach_assignments: Mapped[list["CoachAthleteAssignment"]] = relationship(
+        back_populates="athlete", cascade="all, delete-orphan"
+    )
+    coach_invitations: Mapped[list["CoachAthleteInvitation"]] = relationship(
         back_populates="athlete", cascade="all, delete-orphan"
     )

@@ -14,6 +14,7 @@ class TestRegister:
         body = resp.json()
 
         assert body["user"]["email"] == "athlete@example.com"
+        assert body["user"]["role"] == "athlete"
         assert "id" in body["user"]
         assert body["access_token"]
         assert body["token_type"] == "bearer"

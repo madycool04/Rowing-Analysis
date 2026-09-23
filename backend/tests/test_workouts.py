@@ -37,7 +37,7 @@ class TestUpload:
         assert resp.status_code == 201
         body = resp.json()
 
-        workout = body["workout"]
+        workout = body["workouts"][0]
         assert workout["has_splits"] is True
         assert workout["total_distance_m"] == 2000.0
         assert len(workout["segments"]) == 1
@@ -49,7 +49,7 @@ class TestUpload:
         assert resp.status_code == 201
         body = resp.json()
 
-        workout = body["workout"]
+        workout = body["workouts"][0]
         assert workout["has_splits"] is False
         assert any("summary" in w.lower() for w in body["warnings"])
 
@@ -85,7 +85,10 @@ class TestManualEntry:
             json={
                 "title": "Easy row",
                 "date": "2026-08-10T09:00:00Z",
-                "segments": [{"type": "work", "distance_m": 6000, "duration_s": 1500}],
+                "segments": [{
+                    "type": "work",
+                    "splits": [{"ordinal": 1, "distance_m": 6000, "elapsed_time_s": 1500}],
+                }],
             },
         )
         assert resp.status_code == 201
@@ -128,7 +131,7 @@ class TestListAndDetail:
 
     def test_get_workout_detail(self, client: TestClient) -> None:
         headers = _auth_headers(client)
-        created = _upload_csv(client, headers, DETAILED_CSV).json()["workout"]
+        created = _upload_csv(client, headers, DETAILED_CSV).json()["workouts"][0]
 
         resp = client.get(f"/api/v1/workouts/{created['id']}", headers=headers)
         assert resp.status_code == 200
@@ -137,7 +140,7 @@ class TestListAndDetail:
     def test_cannot_access_another_users_workout(self, client: TestClient) -> None:
         headers_a = _auth_headers(client, email="a@example.com")
         headers_b = _auth_headers(client, email="b@example.com")
-        created = _upload_csv(client, headers_a, DETAILED_CSV).json()["workout"]
+        created = _upload_csv(client, headers_a, DETAILED_CSV).json()["workouts"][0]
 
         resp = client.get(f"/api/v1/workouts/{created['id']}", headers=headers_b)
         assert resp.status_code == 404
@@ -151,7 +154,7 @@ class TestListAndDetail:
 class TestDelete:
     def test_delete_own_workout(self, client: TestClient) -> None:
         headers = _auth_headers(client)
-        created = _upload_csv(client, headers, DETAILED_CSV).json()["workout"]
+        created = _upload_csv(client, headers, DETAILED_CSV).json()["workouts"][0]
 
         resp = client.delete(f"/api/v1/workouts/{created['id']}", headers=headers)
         assert resp.status_code == 204
@@ -162,7 +165,7 @@ class TestDelete:
     def test_cannot_delete_another_users_workout(self, client: TestClient) -> None:
         headers_a = _auth_headers(client, email="a@example.com")
         headers_b = _auth_headers(client, email="b@example.com")
-        created = _upload_csv(client, headers_a, DETAILED_CSV).json()["workout"]
+        created = _upload_csv(client, headers_a, DETAILED_CSV).json()["workouts"][0]
 
         resp = client.delete(f"/api/v1/workouts/{created['id']}", headers=headers_b)
         assert resp.status_code == 404

@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models.athlete import Athlete
-from app.models.user import User
+from app.models.coach import CoachAthleteAssignment
+from app.models.user import User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
@@ -47,6 +48,12 @@ def get_current_athlete(
     Multi-athlete routes explicitly take an athlete_id and verify
     ownership instead of using this dependency.
     """
+    if current_user.role != UserRole.ATHLETE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Athlete access required",
+        )
+
     athlete = (
         db.query(Athlete)
         .filter(Athlete.user_id == current_user.id)
@@ -67,10 +74,37 @@ def get_owned_athlete(
     db: Session = Depends(get_db),
 ) -> Athlete:
     """Fetch a specific athlete by id, enforcing that it belongs to the current user."""
+    if current_user.role != UserRole.ATHLETE:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Athlete access required")
     athlete = db.get(Athlete, athlete_id)
     if athlete is None or athlete.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Athlete not found",
         )
+    return athlete
+
+
+def get_current_coach(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != UserRole.COACH:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Coach access required")
+    return current_user
+
+
+def require_assigned_athlete(
+    athlete_id: int,
+    coach: User = Depends(get_current_coach),
+    db: Session = Depends(get_db),
+) -> Athlete:
+    athlete = (
+        db.query(Athlete)
+        .join(CoachAthleteAssignment, CoachAthleteAssignment.athlete_id == Athlete.id)
+        .filter(
+            Athlete.id == athlete_id,
+            CoachAthleteAssignment.coach_id == coach.id,
+        )
+        .first()
+    )
+    if athlete is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Athlete not found")
     return athlete

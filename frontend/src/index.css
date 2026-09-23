@@ -485,6 +485,80 @@ img {
   border-top: 1px solid var(--color-border);
 }
 
+.coach-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coach-comment {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.coach-comment-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+}
+
+.coach-comment p {
+  margin: 0.55rem 0 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.comment-form {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.comment-form textarea {
+  resize: vertical;
+  min-height: 92px;
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.7rem 0.75rem;
+}
+
+.comment-form textarea:focus {
+  outline: none;
+  border-color: var(--color-accent-dim);
+}
+
+.comment-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.65rem;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.inline-invite-form { display: flex; gap: 0.75rem; margin-top: 1rem; }
+.inline-invite-form input { flex: 1; min-width: 180px; color: var(--color-text-primary); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: 8px; padding: 0.7rem 0.75rem; }
+.success-message { margin-top: 0.75rem; padding: 0.65rem 0.75rem; border: 1px solid rgba(61, 220, 151, 0.35); border-radius: 8px; color: var(--color-accent); background: rgba(61, 220, 151, 0.08); font-size: 0.85rem; }
+.danger-link { color: var(--color-danger); }
+.connection-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.85rem 0; border-top: 1px solid var(--color-border); }
+.connection-row:first-of-type { border-top: 0; }
+.connection-row p { margin: 0.25rem 0 0; color: var(--color-text-secondary); font-size: 0.82rem; }
+.connection-actions { display: flex; gap: 0.5rem; }
+
 /* --- Loading / empty / error states --- */
 
 .inline-state {
@@ -902,6 +976,13 @@ img {
   .page-subtitle {
     font-size: 0.82rem;
   }
+
+  .coach-page-header {
+    flex-direction: column;
+  }
+
+  .inline-invite-form,
+  .connection-row { align-items: stretch; flex-direction: column; }
 
   /* Cards */
 

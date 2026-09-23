@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.api.routes import analytics, athletes, auth, predictions, workouts
+from app.api.routes import analytics, athletes, auth, coach, comments, connections, predictions, workouts
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -103,8 +103,11 @@ def health() -> dict[str, str]:
 app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
 app.include_router(athletes.router, prefix=settings.API_V1_PREFIX)
 app.include_router(workouts.router, prefix=settings.API_V1_PREFIX)
+app.include_router(comments.router, prefix=settings.API_V1_PREFIX)
 app.include_router(analytics.router, prefix=settings.API_V1_PREFIX)
 app.include_router(predictions.router, prefix=settings.API_V1_PREFIX)
+app.include_router(coach.router, prefix=settings.API_V1_PREFIX)
+app.include_router(connections.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.on_event("startup")

@@ -10,6 +10,7 @@ from app.utils.pace import average_pace_per_500, format_pace, watts_from_pace_pe
 
 if TYPE_CHECKING:
     from app.models.athlete import Athlete
+    from app.models.coach import WorkoutComment
     from app.models.segment import Segment
 
 
@@ -78,6 +79,11 @@ class Workout(Base):
         back_populates="workout",
         cascade="all, delete-orphan",
         order_by="Segment.ordinal",
+    )
+    coach_comments: Mapped[list["WorkoutComment"]] = relationship(
+        back_populates="workout",
+        cascade="all, delete-orphan",
+        order_by="WorkoutComment.created_at",
     )
 
     @property

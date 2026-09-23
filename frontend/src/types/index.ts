@@ -17,6 +17,8 @@ export interface HrZoneConfig {
 export interface User {
   id: number;
   email: string;
+  role: "athlete" | "coach";
+  display_name: string | null;
   created_at: string;
 }
 
@@ -53,7 +55,40 @@ export interface AuthResponse {
   access_token: string;
   token_type: string;
   user: User;
+  athlete: Athlete | null;
+}
+
+export interface CoachAthleteSummary {
   athlete: Athlete;
+  recent_workout: WorkoutListItem | null;
+  workout_count: number;
+  two_k_pb_seconds: number | null;
+}
+
+export interface WorkoutComment {
+  id: number;
+  workout_id: number;
+  coach_id: number;
+  coach_name: string;
+  body: string;
+  created_at: string;
+}
+
+export interface CoachInvitation {
+  id: number;
+  coach_id: number;
+  coach_name: string;
+  athlete_id: number;
+  athlete_name: string;
+  athlete_email: string;
+  created_at: string;
+}
+
+export interface CoachConnection {
+  coach_id: number;
+  coach_name: string;
+  coach_email: string;
+  assigned_at: string;
 }
 
 export type SegmentType = "work" | "rest" | "warmup" | "cooldown" | "other";

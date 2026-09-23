@@ -57,6 +57,9 @@ The application should feel useful even if you never touch the prediction featur
 - **2K prediction**: Paul's Law and previous-2K baselines, three ML models evaluated against them
   via chronological walk-forward validation, a conformal uncertainty interval, and a plain-language
   explanation of what changed since the last estimate.
+- **Coach workspace**: website-created coach accounts, consent-based athlete invitations,
+  many-to-many connections, read-only athlete analytics, persisted workout comments, and
+  downloadable athlete PDF reports.
 
 ## Architecture
 
@@ -217,8 +220,43 @@ docker compose up --build
 - Health check: http://localhost:8000/health
 
 Docker Compose waits for PostgreSQL's healthcheck before starting the backend, and for the
-backend's healthcheck before starting the frontend. Tables are created automatically on backend
-startup (`create_all`) for this project's scope — there's no separate migrations step to run.
+backend's healthcheck before starting the frontend. Alembic migrations run automatically before
+the backend starts. For a non-Docker deployment, run `cd backend && alembic upgrade head` before
+starting Uvicorn. `create_all` remains as a development safety net only.
+
+### Coach accounts and athlete connections
+
+No terminal command is needed for normal coach setup:
+
+1. Open **Create account**, choose **Coach**, and enter the coach name (for example,
+   **Coach Carter**).
+2. After signing in, enter an existing athlete's account email on the Coach Dashboard and send an
+   invitation.
+3. The athlete signs in, opens **Coaches**, and accepts or rejects the invitation.
+4. Only acceptance gives that coach access. Either person can disconnect later without deleting
+   workouts or historical comments.
+
+The command-line admin script remains available as an optional recovery/administration tool:
+
+```bash
+docker compose exec backend python -m scripts.coach_admin create-coach \
+  --email coach@example.com --name "Coach Carter"
+
+docker compose exec backend python -m scripts.coach_admin assign \
+  --coach coach@example.com --athlete athlete@example.com
+```
+
+Omit `--password` when creating the coach to enter it without putting it in shell history. Remove
+an assignment without deleting any athlete data or historical comments:
+
+```bash
+docker compose exec backend python -m scripts.coach_admin unassign \
+  --coach coach@example.com --athlete athlete@example.com
+```
+
+Coaches use the normal login page and are routed to `/coach`. Every coach API request verifies the
+coach role and current assignment. Coaches cannot use athlete profile, upload, manual-entry, or
+workout-deletion endpoints.
 
 To generate a realistic demo dataset for a fresh account:
 
@@ -267,7 +305,7 @@ continuous pieces or multi-segment sessions (with types WORK/REST/WARMUP/COOLDOW
 All endpoints are under `/api/v1`. Full interactive docs at `/docs` once the backend is running.
 
 ```
-POST   /auth/register              Create account (auto-creates a default athlete)
+POST   /auth/register              Create athlete or coach account
 POST   /auth/login
 GET    /auth/me
 
@@ -287,6 +325,27 @@ GET    /analytics/performance      Personal bests
 GET    /analytics/training-load
 
 GET    /predictions/2k
+
+GET    /workouts/{id}/comments                    Athlete/assigned-coach comment view
+
+GET    /coach/invitations                         Sent athlete invitations
+POST   /coach/invitations                         Invite an existing athlete by email
+DELETE /coach/invitations/{id}                    Cancel a pending invitation
+GET    /coach/athletes                            Assigned athlete summaries
+DELETE /coach/athletes/{id}                       Disconnect an athlete
+GET    /coach/athletes/{id}                       Assigned athlete profile
+GET    /coach/athletes/{id}/workouts              Read-only workout history
+GET    /coach/athletes/{id}/workouts/{workout_id} Read-only workout detail
+GET    /coach/athletes/{id}/analytics/*           Read-only analytics
+GET    /coach/athletes/{id}/predictions/2k        Non-persisting prediction view
+POST   /coach/athletes/{id}/workouts/{workout_id}/comments
+GET    /coach/athletes/{id}/report.pdf            28-day PDF report by default
+
+GET    /athlete/coaches/invitations               Received coach invitations
+POST   /athlete/coaches/invitations/{id}/accept   Accept and grant coach access
+POST   /athlete/coaches/invitations/{id}/reject   Reject without granting access
+GET    /athlete/coaches                           Connected coaches
+DELETE /athlete/coaches/{coach_id}                Disconnect a coach
 ```
 
 Every route that touches athlete-owned data enforces ownership at the query level — a workout,
@@ -303,9 +362,8 @@ Deliberately out of scope for this version, per the original roadmap:
 
 - **Phase 2**: Concept2 Logbook API integration, OAuth, richer workout import
 - **Phase 3**: Stroke-level analytics — drive length, drive time, recovery time, peak force, stroke power
-- **Phase 4**: Coach accounts, multiple athletes per coach, athlete-to-athlete comparison
+- **Phase 4**: Athlete-to-athlete comparison and richer squad management
 - **Phase 5**: Training recommendations, workout planning, performance forecasting
 
-Also worth doing before a real production deployment: rate limiting, Alembic migrations (currently
-`create_all` on startup, fine for this project's scope but not for schema evolution in production),
-and structured application logging/monitoring.
+Also worth doing before a real production deployment: rate limiting and structured application
+logging/monitoring.

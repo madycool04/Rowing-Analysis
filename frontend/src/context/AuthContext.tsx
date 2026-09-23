@@ -14,13 +14,13 @@ interface AuthContextValue {
   athlete: Athlete | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   register: (
     email: string,
     password: string,
     role?: "athlete" | "coach",
     displayName?: string,
-  ) => Promise<void>;
+  ) => Promise<User>;
   logout: () => void;
   /** Lets pages that mutate the athlete profile (e.g. settings) refresh context state. */
   setAthlete: (athlete: Athlete) => void;
@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredToken(res.access_token);
     setUser(res.user);
     setAthleteState(res.athlete);
+    return res.user;
   }, []);
 
   const register = useCallback(async (
@@ -78,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredToken(res.access_token);
     setUser(res.user);
     setAthleteState(res.athlete);
+    return res.user;
   }, []);
 
   const logout = useCallback(() => {

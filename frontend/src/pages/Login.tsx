@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { extractErrorMessage } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 export function Login() {
   const { login } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? "/";
 
@@ -19,8 +18,11 @@ export function Login() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await login(email, password);
-      navigate(from, { replace: true });
+      const loggedInUser = await login(email, password);
+      const destination = loggedInUser.role === "coach"
+        ? (from.startsWith("/coach") ? from : "/coach")
+        : (from.startsWith("/coach") ? "/" : from);
+      window.location.replace(destination);
     } catch (err) {
       setError(extractErrorMessage(err, "Login failed. Check your email and password."));
     } finally {

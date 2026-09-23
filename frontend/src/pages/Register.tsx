@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { extractErrorMessage } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
@@ -7,7 +7,6 @@ const MIN_PASSWORD_LENGTH = 8;
 
 export function Register() {
   const { register } = useAuth();
-  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,11 +26,10 @@ export function Register() {
 
     setIsSubmitting(true);
     try {
-      await register(email, password, role, displayName);
-      // Signup auto-creates and auto-selects a default athlete profile,
-      // so the new user goes straight to the dashboard - never an empty
-      // athlete-selection screen.
-      navigate(role === "coach" ? "/coach" : "/", { replace: true });
+      const registeredUser = await register(email, password, role, displayName);
+      // Route using the role confirmed by the backend response, not local
+      // form state. This also avoids racing the auth context state update.
+      window.location.replace(registeredUser.role === "coach" ? "/coach" : "/");
     } catch (err) {
       setError(extractErrorMessage(err, "Could not create your account."));
     } finally {

@@ -57,6 +57,7 @@ export function extractErrorMessage(error: unknown, fallback = "Something went w
       return detail.map((d) => d.msg).join(", ");
     }
   }
+  if (error instanceof Error && error.message) return error.message;
   return fallback;
 }
 

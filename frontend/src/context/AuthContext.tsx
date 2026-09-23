@@ -76,6 +76,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     displayName?: string,
   ) => {
     const res = await authApi.register(email, password, role, displayName);
+    if (res.user.role !== role) {
+      setStoredToken(null);
+      setUser(null);
+      setAthleteState(null);
+      throw new Error(
+        `The deployed API created a ${res.user.role} account instead of a ${role} account. ` +
+        "Redeploy the backend with the coach-role update, then register again with a new email.",
+      );
+    }
     setStoredToken(res.access_token);
     setUser(res.user);
     setAthleteState(res.athlete);
